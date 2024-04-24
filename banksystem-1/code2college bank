@@ -95,7 +95,7 @@ class BankAccountGUI:
         amount = float(self.amount_entry.get())
         if self.bank_account and amount:
             self.bank_account.deposit(amount)
-            messagebox.showinfo("Deposit", f"Deposited                         ${amount}.")
+            messagebox.showinfo("Deposit", f"Deposited  ${amount}.")
         else:
             messagebox.showerror("Error", "Please enter a valid               amount.")
 
@@ -106,9 +106,9 @@ class BankAccountGUI:
             if message:
                 messagebox.showerror("Error", message)
             else:
-                messagebox.showinfo("Withdraw", f"Withdrew                       ${amount}.")
+                messagebox.showinfo("Withdraw", f"Withdrew ${amount}.")
         else:
-            messagebox.showerror("Error", "Please enter a valid               amount.")
+            messagebox.showerror("Error", "Please enter a valid amount.")
 
     def check_balance(self):
         if self.bank_account:
