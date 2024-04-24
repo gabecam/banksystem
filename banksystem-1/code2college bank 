@@ -1,0 +1,126 @@
+import mysql.connector
+import tkinter as tk
+from tkinter import messagebox
+
+# Connect to MySQL database
+connection = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    password="9Gaqure%CA",
+    database="bank_system"
+)
+cursor = connection.cursor()
+
+class BankAccount:
+    def __init__(self, customer_name, account_no):
+        self.customer_name = customer_name
+        self.account_no = account_no
+        self.balance = 0.0
+
+    def open_account(self):
+        # Insert account data into MySQL database
+        query = "INSERT INTO accounts (customer_name, account_no, balance) VALUES (%s, %s, %s)"
+        values = (self.customer_name, self.account_no, self.balance)
+        cursor.execute(query, values)
+        connection.commit()
+
+    def deposit(self, amount):
+        if amount > 0:
+            # Update balance in MySQL database
+            query = "UPDATE accounts SET balance = balance + %s WHERE account_no = %s"
+            values = (amount, self.account_no)
+            cursor.execute(query, values)
+            connection.commit()
+
+    def withdraw(self, amount):
+        if amount > 0:
+            # Check if sufficient balance and update balance in MySQL database
+            query = "UPDATE accounts SET balance = balance - %s WHERE account_no = %s AND balance >= %s"
+            values = (amount, self.account_no, amount)
+            cursor.execute(query, values)
+            if cursor.rowcount == 0:
+                return "Insufficient funds."
+            connection.commit()
+
+    def check_balance(self):
+        # Retrieve account balance from MySQL database
+        query = "SELECT balance FROM accounts WHERE account_no = %s"
+        values = (self.account_no,)
+        cursor.execute(query, values)
+        result = cursor.fetchone()
+        if result:
+            return f"Account balance for {self.account_no}: ${result[0]}"
+        else:
+            return "Account not found."
+
+class BankAccountGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Bank Account Management")
+        self.customer_name_label = tk.Label(root, text="Customer Name:")
+        self.customer_name_label.pack()
+        self.customer_name_entry = tk.Entry(root)
+        self.customer_name_entry.pack()
+        self.account_no_label = tk.Label(root, text="Account Number:")
+        self.account_no_label.pack()
+        self.account_no_entry = tk.Entry(root)
+        self.account_no_entry.pack()
+        self.amount_label = tk.Label(root, text="Amount:")
+        self.amount_label.pack()
+        self.amount_entry = tk.Entry(root)
+        self.amount_entry.pack()
+        self.open_account_btn = tk.Button(root, text="Open Account", command=self.open_account)
+        self.open_account_btn.pack()
+        self.deposit_btn = tk.Button(root, text="Deposit", command=self.deposit)
+        self.deposit_btn.pack()
+        self.withdraw_btn = tk.Button(root, text="Withdraw", command=self.withdraw)
+        self.withdraw_btn.pack()
+        self.check_balance_btn = tk.Button(root, text="Check Balance", command=self.check_balance)
+        self.check_balance_btn.pack()
+        self.output_label = tk.Label(root, text="")
+        self.output_label.pack()
+        self.bank_account = None
+
+    def open_account(self):
+        customer_name = self.customer_name_entry.get()
+        account_no = self.account_no_entry.get()
+        if customer_name and account_no:
+            self.bank_account = BankAccount(customer_name, account_no)
+            self.bank_account.open_account()
+            messagebox.showinfo("Account Opened", f"Account {account_no} opened for {customer_name}.")
+        else:
+            messagebox.showerror("Error", "Please enter valid customer name and account number.")
+
+    def deposit(self):
+        amount = float(self.amount_entry.get())
+        if self.bank_account and amount:
+            self.bank_account.deposit(amount)
+            messagebox.showinfo("Deposit", f"Deposited                         ${amount}.")
+        else:
+            messagebox.showerror("Error", "Please enter a valid               amount.")
+
+    def withdraw(self):
+        amount = float(self.amount_entry.get())
+        if self.bank_account and amount:
+            message = self.bank_account.withdraw(amount)
+            if message:
+                messagebox.showerror("Error", message)
+            else:
+                messagebox.showinfo("Withdraw", f"Withdrew                       ${amount}.")
+        else:
+            messagebox.showerror("Error", "Please enter a valid               amount.")
+
+    def check_balance(self):
+        if self.bank_account:
+            balance = self.bank_account.check_balance()
+            self.output_label.config(text=balance)
+        else:
+            messagebox.showerror("Error", "No account is opened.")
+
+root = tk.Tk()
+app = BankAccountGUI(root)
+root.mainloop()
+
+# Close MySQL connection
+cursor.close()
+connection.close()
